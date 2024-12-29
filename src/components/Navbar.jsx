@@ -61,8 +61,11 @@ const Navbar = () => {
 
           {/* Button Section (Desktop) */}
           <div className="hidden lg:flex items-center space-x-4 flex-row gap-2">
-            <Link to="/dashboard"><button className="px-4 py-2 bg-button text-main font-medium rounded-lg transition-all duration-100 ease-in-out hover:bg-main hover:text-button hover:border-text hover:border-2 shadow-md">
-              Dashboard</button></Link>
+            <Link to="/dashboard">
+              <button className="px-4 py-2 bg-button text-main font-medium rounded-lg transition-all duration-100 ease-in-out hover:bg-main hover:text-button hover:border-text hover:border-2 shadow-md">
+                Dashboard
+              </button>
+            </Link>
             <Button />
             <button
               onClick={switchLanguage}
@@ -83,7 +86,13 @@ const Navbar = () => {
               >
                 &times;
               </button>
+              <Link to="/dashboard">
+                <button className="px-4 py-2 bg-button text-main font-medium rounded-lg transition-all duration-100 ease-in-out hover:bg-main hover:text-button hover:border-text hover:border-2 shadow-md">
+                  Dashboard
+                </button>
+              </Link>
               <Button />
+
               <button
                 onClick={switchLanguage}
                 className="block px-4 py-2 rounded-lg bg-transparent text-button hover:bg-button hover:text-main"
