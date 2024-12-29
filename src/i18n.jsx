@@ -1,0 +1,112 @@
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+// Define your translations (English and Arabic)
+const resources = {
+  en: {
+    translation: {
+      Couponk: "CouponK",
+      Title: "Love deals? You came to the right place.",
+      Subtitle: "Discover the best deals and save money with our coupons.",
+      Search: "Search...",
+      All: "All",
+      Shopping: "Shopping",
+      Travel: "Travel",
+      Cinema: "Cinema",
+      AddCoupon: "Add Coupon",
+      CouponTitle: "Title",
+      CouponValue: "Description in English",
+      Category: "Category",
+      SelectCategory: "Select a category",
+      CouponCode: "Coupon Code",
+      CouponTitle_ar: "Title in Arabic",
+      CouponValue_ar: "Description in Arabic",
+      Category_ar: "Category",
+      SelectCategory_ar: "Select a category",
+      CouponCode_ar: "Coupon Code in Arabic",
+      LogoURL: "Logo URL",
+      Cancel: "Cancel",
+      CouponList: "Coupon List",
+      AddCategory: "Add Category",
+      Add: "Add",
+      Categories: "Categories",
+      Delete: "Delete",
+      Logout: "Logout",
+      CopyRight: "CouponK. All rights reserved.",
+      Status: "Status",
+      Approve: "Approve",
+      Disapprove: "Disapprove",
+      Code: "Get Code",
+      dashCouponTitle : "Title",
+      dashCouponValue : "Description",
+      dashCouponCode : "Coupon Code",
+      UpdateOrder : "Change Order",
+      ApprovedCoupons : "Active Coupons",
+      UnapprovedCoupons : "Inactive Coupons",
+      formTitleen : "Title in English",
+      formTitlear : "Title in Arabic",
+      formValueen : "Description in English",
+      formValuear : "Description in Arabic",
+      formCode : "Coupon Code",
+      formCaten: "Category in English",
+      formCatar: "Category in Arabic",
+    },
+  },
+  ar: {
+    translation: {
+      Couponk: "كوبونك",
+      Title: "تحب الصفقات ؟ لقد جئت إلى المكان الصحيح.",
+      Subtitle: "اكتشف الصفقات الأفضل واحفظ مالك مع كوبوناتنا.",
+      Search: "بحث...",
+      All: "الكل",
+      Shopping: "تسوق",
+      Travel: "سفر",
+      Cinema: "سينما",
+      AddCoupon: "إضافة كوبون",
+      CouponTitle: "العنوان",
+      CouponValue: "الوصف",
+      Category: "الفئة",
+      SelectCategory: "اختر فئة",
+      CouponCode: "كود الكوبون",
+      LogoURL: "رابط اللوجو",
+      Cancel: "إلغاء",
+      CouponList: "قائمة الكوبونات",
+      AddCategory: "إضافة فئة",
+      Add: "إضافة",
+      Categories: "الفئات",
+      Delete: "حذف",
+      Logout: "تسجيل الخروج",
+      CopyRight: "كوبونك. جميع الحقوق محفوظة.",
+      Status: "الحالة",
+      Approve: "قبول",
+      Disapprove: "رفض",
+      Code: "احصل على الكود",
+      dashCouponTitle : "العنوان",
+      dashCouponValue : "الوصف",
+      dashCouponCode : "كود الكوبون",
+      UpdateOrder: "تغيير الترتيب",
+      ApprovedCoupons: "كوبونات نشطة",
+      UnapprovedCoupons: "كوبونات غير نشطة",
+      formTitleen : "العنوان باللغة الانجليزية",
+      formTitlear : "العنوان باللغة العربية",
+      formValueen : "الوصف باللغة الانجليزية",
+      formValuear : "الوصف باللغة العربية",
+      formCode : "كود الكوبون",
+      formCaten: "الفئة باللغة الانجليزية",
+      formCatar: "الفئة باللغة العربية",
+    },
+  },
+};
+
+const language = localStorage.getItem("language") || "en";
+i18n.use(initReactI18next).init({
+  resources,
+  lng: language, // default language
+  fallbackLng: "en", // fallback language if the translation is missing
+  interpolation: {
+    escapeValue: false, // React already escapes values
+  },
+});
+document.documentElement.setAttribute("dir", language === "ar" ? "rtl" : "ltr");
+
+export default i18n;
