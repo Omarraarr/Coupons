@@ -114,6 +114,7 @@ const AdminDashboard = () => {
     }
   };
 
+  // Delete a product
   const deleteProduct = async (productId) => {
     try {
       const productRef = doc(db, "products", productId);
@@ -136,6 +137,7 @@ const AdminDashboard = () => {
   };
 
   const { t } = useTranslation();
+  
   if (loading) {
     return (
       <Loading />
