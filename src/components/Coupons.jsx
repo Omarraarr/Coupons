@@ -115,11 +115,18 @@ const Coupons = () => {
     }
   };
 
-  if (loading) {
+if (loading) {
     return (
-      <div>
-        <Loading />
-      </div>
+      <StyledWrapper>
+        <SearchBar
+          categories={[]}
+          onSearchChange={() => {}}
+          onCategoryChange={() => {}}
+        />
+        <div className="flex justify-center items-center h-96">
+          <Loading />
+        </div>
+      </StyledWrapper>
     );
   }
 
