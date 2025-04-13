@@ -14,7 +14,7 @@ const Coupons = () => {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [copyMessage, setCopyMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [categories, setCategories] = useState([]); // Dynamic categories
   const { t } = useTranslation();
 
