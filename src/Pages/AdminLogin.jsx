@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase"; // Ensure your Firebase config is correctly set up
-import { useNavigate } from "react-router-dom"; // React Router for navigation
+import { auth } from "../firebase";
+import { useNavigate } from "react-router-dom";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +15,7 @@ const AdminLogin = () => {
       await signInWithEmailAndPassword(auth, email, password);
       // Redirect to the dashboard
       navigate("/dashboard");
-    // eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line no-unused-vars
     } catch (err) {
       setError("Invalid email or password.");
     }
@@ -24,7 +24,9 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white border-2 border-main shadow-lg rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-6 text-main text-center">Admin Login</h2>
+        <h2 className="text-2xl font-bold mb-6 text-main text-center">
+          Admin Login
+        </h2>
         {error && (
           <div className="bg-red-100 text-red-600 p-3 mb-4 rounded">
             {error}
@@ -32,10 +34,7 @@ const AdminLogin = () => {
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-main font-medium mb-2"
-            >
+            <label htmlFor="email" className="block text-main font-medium mb-2">
               Email
             </label>
             <input

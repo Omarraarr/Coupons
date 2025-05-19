@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useState, useMemo, useCallback, memo } from "react";
 import styled from "styled-components";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
@@ -7,9 +8,47 @@ import Loading from "./Loading";
 import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 
+// Memoized Coupon Card Component
+const CouponCard = memo(({ coupon, onCardClick, t }) => {
+  return (
+    <div
+      key={coupon.id}
+      className="bg-white border-2 border-main shadow-md rounded-lg flex flex-col items-center text-center p-4 w-64 
+hover:shadow-lg hover:-translate-y-2 transition-transform duration-300 ease-in-out card wallet"
+      onClick={() => onCardClick(coupon)}
+    >
+      <div className="overlay2" />
+      {/* Logo */}
+      <div className="w-20 h-20 flex items-center justify-center mb-4 z-50">
+        <img
+          src={coupon.logo}
+          alt={i18n.language === "ar" ? coupon.title_ar : coupon.title_en} // Use translated title for alt text
+          className="w-full h-full object-contain rounded-md z-50"
+          loading="lazy" // Lazy load images
+        />
+      </div>
+
+      {/* Title */}
+      <h3 className="text-lg font-semibold text-main mb-1 z-50">
+        {i18n.language === "ar" ? coupon.title_ar : coupon.title_en}
+      </h3>
+
+      {/* Discount Text */}
+      <p className="text-main text-sm mb-4 z-50">
+        {i18n.language === "ar" ? coupon.codeVal_ar : coupon.codeVal_en}
+      </p>
+
+      {/* CTA Button */}
+      <button className="bg-main text-white text-sm font-medium py-2 px-6 rounded-full hover:bg-main transition-colors duration-200 z-50 mt-8">
+        {t("Code")}
+      </button>
+    </div>
+  );
+});
+CouponCard.displayName = "CouponCard"; // Add display name for better debugging
+
 const Coupons = () => {
-  const [coupons, setCoupons] = useState([]);
-  const [filteredCoupons, setFilteredCoupons] = useState([]);
+  const [allCoupons, setAllCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [copyMessage, setCopyMessage] = useState("");
@@ -20,102 +59,135 @@ const Coupons = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [couponSnap, categorySnap] = await Promise.all([
-        getDocs(
-          query(
-            collection(db, "products"),
-            where("approved", "==", true),
-            orderBy("order","asc") // Add ordering here
-          )
-        ),
-        getDocs(collection(db, "categories")),
-      ]);
-  
-      const fetchedCoupons = couponSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      const fetchedCategories = categorySnap.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: i18n.language === 'ar' ? (data.name_ar || data.name_en) : (data.name_en || data.name_ar),
-        };
-      });
-      setCoupons(fetchedCoupons);
-      setFilteredCoupons(fetchedCoupons);
-      setCategories([{ id: "all", name: "All" }, ...fetchedCategories]);
-      setLoading(false);
-    };
-  
-    fetchData();
-  },[i18n.language]);
-  
-
-  const handleSearchChange = (term) => {
-    setSearchTerm(term);
-    filterCoupons(term, selectedCategory);
-  };
-
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    console.log("Selected category:", category);
-    filterCoupons(searchTerm, category);
-  };
-
-  const filterCoupons = (term, category) => {
-    let filtered = [...coupons];
-    if (category !== "All") {
-      filtered = filtered.filter((coupon) => {
-        console.log(
-          "Checking coupon category:",
-          (
-            coupon.category_ar === category || 
-            coupon.category_en === category
+      setLoading(true);
+      try {
+        const [couponSnap, categorySnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(db, "products"),
+              where("approved", "==", true),
+              orderBy("order", "asc")
+            )
           ),
-          "against",
-          category
+          getDocs(collection(db, "categories")),
+        ]);
+
+        const fetchedCoupons = couponSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const fetchedCategories = categorySnap.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            // Ensure consistent name property for filtering and display
+            name:
+              i18n.language === "ar"
+                ? data.name_ar || data.name_en
+                : data.name_en || data.name_ar,
+            name_en: data.name_en,
+            name_ar: data.name_ar,
+          };
+        });
+        setAllCoupons(fetchedCoupons);
+        // Update categories to use the current language for display name, but keep original names for filtering if needed
+        setCategories([
+          { id: "all", name: t("All") },
+          ...fetchedCategories.map((cat) => ({
+            ...cat,
+            name:
+              i18n.language === "ar"
+                ? cat.name_ar || cat.name_en
+                : cat.name_en || cat.name_ar,
+          })),
+        ]);
+      } catch (error) {
+        console.error("Error fetching data: ", error);
+        // Handle error state appropriately, e.g., show an error message to the user
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    // Consider if i18n.language is truly needed here. If category names are fetched with both ar/en versions,
+    // the translation can happen at render time, or categories state can be updated without re-fetching coupons.
+    // For now, keeping it to ensure category names are updated in the dropdown.
+  }, [i18n.language, t]); // Added t to dependencies as it's used in 'All' category name
+
+  const filteredCoupons = useMemo(() => {
+    let filtered = [...allCoupons];
+    if (selectedCategory !== "All") {
+      // Assuming category object in selectedCategory has id and name properties
+      // And coupon has category_en or category_ar that matches the name from fetchedCategories
+      filtered = filtered.filter((coupon) => {
+        // Find the category object that matches selectedCategory (which is a string name)
+        const categoryObject = categories.find(
+          (c) => c.name === selectedCategory
         );
-        return (
-          coupon.category_ar === category || 
-          coupon.category_en === category
-        );
+        if (categoryObject && categoryObject.id !== "all") {
+          // Assuming coupon.category is an ID or a direct name that matches categoryObject.id or specific language name
+          // This part might need adjustment based on how coupon.category is stored (ID vs name)
+          // For now, let's assume coupon.category_en/ar stores the name that matches categoryObject.name_en/ar
+          return (
+            coupon.category_en === categoryObject.name_en ||
+            coupon.category_ar === categoryObject.name_ar ||
+            coupon.category_en === selectedCategory ||
+            coupon.category_ar === selectedCategory
+          );
+        }
+        return true; // If 'All' or category not found, don't filter by category yet
       });
     }
-    if (term) {
-      filtered = filtered.filter((coupon) =>
-        (coupon.title_en && coupon.title_en.toLowerCase().includes(term.toLowerCase())) ||
-        (coupon.title_ar && coupon.title_ar.toLowerCase().includes(term.toLowerCase()))
+
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (coupon) =>
+          (coupon.title_en &&
+            coupon.title_en.toLowerCase().includes(lowerSearchTerm)) ||
+          (coupon.title_ar &&
+            coupon.title_ar.toLowerCase().includes(lowerSearchTerm))
       );
     }
-    setFilteredCoupons(filtered);
-  };
+    return filtered;
+  }, [allCoupons, searchTerm, selectedCategory, categories]);
 
-  const handleCardClick = (coupon) => {
+  const handleSearchChange = useCallback((term) => {
+    setSearchTerm(term);
+  }, []);
+
+  const handleCategoryChange = useCallback((categoryName) => {
+    // categoryName is the display name from the dropdown
+    setSelectedCategory(categoryName);
+  }, []);
+
+  const handleCardClick = useCallback((coupon) => {
     setSelectedCoupon(coupon);
-  };
+  }, []);
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     setSelectedCoupon(null);
     setCopyMessage("");
-  };
+  }, []);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     if (selectedCoupon && selectedCoupon.code) {
       navigator.clipboard
         .writeText(selectedCoupon.code)
         .then(() => {
-          setCopyMessage("Copied to clipboard!");
+          setCopyMessage(t("Copied to clipboard!")); // Use t function for translation
           setTimeout(() => setCopyMessage(""), 2000);
         })
         .catch((err) => {
           console.error("Failed to copy text: ", err);
-          setCopyMessage("Failed to copy. Try again!");
+          setCopyMessage(t("Failed to copy. Try again!")); // Use t function for translation
         });
     }
-  };
+  }, [selectedCoupon, t]); // Added t to dependencies
 
-if (loading) {
+  if (loading) {
     return (
       <div>
         <Loading />
@@ -126,48 +198,28 @@ if (loading) {
   return (
     <StyledWrapper>
       <SearchBar
-        categories={categories}
+        categories={categories.map((c) => ({
+          ...c,
+          name:
+            i18n.language === "ar"
+              ? c.name_ar || c.name_en || c.name
+              : c.name_en || c.name_ar || c.name,
+        }))} // Ensure category names are translated for SearchBar
         onSearchChange={handleSearchChange}
-        onCategoryChange={handleCategoryChange}
-        placeholder="Search..."
+        onCategoryChange={handleCategoryChange} // Pass the name string
+        placeholder={t("Search...")} // Use t function for translation
+        selectedCategory={selectedCategory}
       />
 
       {/* Coupon List */}
       <div className="container mx-auto flex flex-wrap justify-center md:justify-start gap-7 lg:gap-8 px-6 py-4">
-        {filteredCoupons
-        
-        .map((coupon) => (
-          <div
-            key={coupon.id}
-            className="bg-white border-2 border-main shadow-md rounded-lg flex flex-col items-center text-center p-4 w-64 
-      hover:shadow-lg hover:-translate-y-2 transition-transform duration-300 ease-in-out card wallet"
-            onClick={() => handleCardClick(coupon)}
-          >
-            <div className="overlay2" />
-            {/* Logo */}
-            <div className="w-20 h-20 flex items-center justify-center mb-4 z-50">
-              <img
-                src={coupon.logo}
-                alt={coupon.title}
-                className="w-full h-full object-contain rounded-md z-50"
-              />
-            </div>
-
-            {/* Title */}
-            <h3 className="text-lg font-semibold text-main mb-1 z-50">
-              {i18n.language === "ar" ? coupon.title_ar: coupon.title_en}
-            </h3>
-
-            {/* Discount Text */}
-            <p className="text-main text-sm mb-4 z-50">
-              {i18n.language === "ar" ? coupon.codeVal_ar :  coupon.codeVal_en}
-            </p>
-
-            {/* CTA Button */}
-            <button className="bg-main text-white text-sm font-medium py-2 px-6 rounded-full hover:bg-main transition-colors duration-200 z-50 mt-8">
-              {t("Code")}
-            </button>
-          </div>
+        {filteredCoupons.map((coupon) => (
+          <CouponCard
+            key={coupon.id} // Key should be on the actual component being mapped
+            coupon={coupon}
+            onCardClick={handleCardClick}
+            t={t} // Pass t function for translations inside CouponCard
+          />
         ))}
       </div>
 
@@ -183,13 +235,22 @@ if (loading) {
             </span>
             <img
               src={selectedCoupon.logo}
-              alt="Logo"
+              alt={
+                i18n.language === "ar"
+                  ? selectedCoupon.title_ar
+                  : selectedCoupon.title_en
+              } // Translated alt text
               className="w-20 rounded-lg mb-5 mx-auto"
+              loading="lazy" // Lazy load image in popup as well
             />
             <h3 className="text-xl font-medium leading-8 mb-5">
-              {i18n.language === "ar" ? selectedCoupon.title_ar : selectedCoupon.title_en}
+              {i18n.language === "ar"
+                ? selectedCoupon.title_ar
+                : selectedCoupon.title_en}
               <br />
-              {i18n.language === "ar" ? selectedCoupon.codeVal_ar : selectedCoupon.codeVal_en}
+              {i18n.language === "ar"
+                ? selectedCoupon.codeVal_ar
+                : selectedCoupon.codeVal_en}
             </h3>
             <div className="relative bg-main text-white text-center p-10 rounded-lg shadow-lg">
               <div className="flex items-center justify-center mt-6 mb-4">
@@ -200,7 +261,7 @@ if (loading) {
                   onClick={handleCopy}
                   className="border border-white bg-white text-main py-2 px-4 cursor-pointer"
                 >
-                  Copy
+                  {t("Copy")} {/* Use t function for translation */}
                 </button>
               </div>
               {copyMessage && (
